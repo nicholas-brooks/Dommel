@@ -14,6 +14,7 @@ namespace Dommel;
 public static class Resolvers
 {
     private static readonly ConcurrentDictionary<string, string> TypeTableNameCache = new();
+    private static readonly ConcurrentDictionary<string, IEnumerable<string>?> TypeSelectExpressionCache = new();
     private static readonly ConcurrentDictionary<string, string> ColumnNameCache = new();
     private static readonly ConcurrentDictionary<Type, ColumnPropertyInfo[]> TypeKeyPropertiesCache = new();
     private static readonly ConcurrentDictionary<Type, ColumnPropertyInfo[]> TypePropertiesCache = new();
@@ -122,6 +123,50 @@ public static class Resolvers
 
         DommelMapper.LogReceived?.Invoke($"Resolved table name '{name}' for '{type}'");
         return name;
+    }
+
+    /// <summary>
+    /// Gets the select expression (e.g. list of fields or by default '*') portion of the sql statement for the 
+    /// given type using the configured <see cref="ISelectExpressionResolver"/>.
+    /// </summary>
+    /// <param name="type">The type to generate the select expression for.</param>
+    /// <param name="sqlBuilder">The SQL builder instance.</param>
+    /// <returns>The select expression for the given type.</returns>
+    public static string SelectExpression(Type type, ISqlBuilder sqlBuilder)
+    {
+        var key = $"{sqlBuilder.GetType()}.{type}";
+        if (!TypeSelectExpressionCache.TryGetValue(key, out var fields))
+        {
+            fields = DommelMapper.SelectExpressionResolver.ResolveSelectExpression(type, sqlBuilder);
+            TypeSelectExpressionCache.TryAdd(key, fields);
+        }
+
+        var select = fields != null ? string.Join(",", fields) : "*";
+
+        DommelMapper.LogReceived?.Invoke($"Resolved select fields '{select}' for '{type}'");
+        return select;
+    }
+
+    /// <summary>
+    /// Gets the select expression (e.g. list of fields or by default '*') portion of the sql statement for the 
+    /// given types using the configured <see cref="ISelectExpressionResolver"/>.
+    /// </summary>
+    /// <param name="types">The list of of types to generate the select expression for.</param>
+    /// <param name="sqlBuilder">The SQL builder instance.</param>
+    /// <returns>The select expression for the given Types.</returns>
+    public static string SelectExpression(Type[] types, ISqlBuilder sqlBuilder)
+    {
+        var fields = new List<string>();
+        foreach (var type in types)
+        {
+            var typeFields = SelectExpression(type, sqlBuilder);
+            if (typeFields == "*")
+                return "*"; // if any types are '*', we default to '*' for whole select expression.
+            if (typeFields.Length > 0)
+                fields.Add(typeFields);
+        }
+
+        return fields.Any() ? string.Join(",", fields) : "*";
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
 
 namespace Dommel.Tests;
@@ -19,6 +20,19 @@ public class ResolversTests
     {
         Assert.Equal("[BarA]", Resolvers.Table(typeof(Foo.Bar), _sqlBuilder));
         Assert.Equal("[BarB]", Resolvers.Table(typeof(Baz.Bar), _sqlBuilder));
+    }
+
+    [Fact]
+    public void SelectExpression_WithDefaultResolver_ReturnsStarForSingleType()
+    {
+        Assert.Equal("*", Resolvers.SelectExpression(typeof(Foo.Bar), _sqlBuilder));
+        Assert.Equal("*", Resolvers.SelectExpression(typeof(Baz.Bar), _sqlBuilder));
+    }
+
+    [Fact]
+    public void SelectExpression_WithDefaultResolver_ReturnsStarForMultipleTypes()
+    {
+        Assert.Equal("*", Resolvers.SelectExpression(new Type[] { typeof(Foo.Bar), typeof(Baz.Bar) }, _sqlBuilder));
     }
 
     [Fact]

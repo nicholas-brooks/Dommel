@@ -21,6 +21,7 @@ public static partial class DommelMapper
     internal static IKeyPropertyResolver KeyPropertyResolver = new DefaultKeyPropertyResolver();
     internal static IForeignKeyPropertyResolver ForeignKeyPropertyResolver = new DefaultForeignKeyPropertyResolver();
     internal static ITableNameResolver TableNameResolver = new DefaultTableNameResolver();
+    internal static ISelectExpressionResolver SelectExpressionResolver = new DefaultSelectExpressionResolver();
     internal static IColumnNameResolver ColumnNameResolver = new DefaultColumnNameResolver();
 
     internal static readonly Dictionary<string, ISqlBuilder> SqlBuilders = new()
@@ -94,6 +95,12 @@ public static partial class DommelMapper
     /// </summary>
     /// <param name="resolver">An instance of <see cref="ITableNameResolver"/>.</param>
     public static void SetTableNameResolver(ITableNameResolver resolver) => TableNameResolver = resolver;
+
+    /// <summary>
+    /// Sets the <see cref="ISelectExpressionResolver"/> implementation for resolving select expression for entities.
+    /// </summary>
+    /// <param name="resolver"></param>
+    public static void SetSelectExpressionResolver(ISelectExpressionResolver resolver) => SelectExpressionResolver = resolver;
 
     /// <summary>
     /// Sets the <see cref="IColumnNameResolver"/> implementation for resolving column names.

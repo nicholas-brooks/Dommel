@@ -49,7 +49,7 @@ public class SqlExpression<TEntity>
     /// <returns>The current <see cref="SqlExpression{TEntity}"/> instance.</returns>
     public virtual SqlExpression<TEntity> Select()
     {
-        _selectQuery = $"select * from {Resolvers.Table(typeof(TEntity), SqlBuilder)}";
+        _selectQuery = $"select {Resolvers.SelectExpression(typeof(TEntity), SqlBuilder)} from {Resolvers.Table(typeof(TEntity), SqlBuilder)}";
         return this;
     }
 

@@ -50,6 +50,7 @@ public static partial class DommelMapper
         if (!QueryCache.TryGetValue(cacheKey, out var sql))
         {
             var tableName = Resolvers.Table(type, sqlBuilder);
+            var selectFields = Resolvers.SelectExpression(type, sqlBuilder);
             var keyProperties = Resolvers.KeyProperties(type);
             if (keyProperties.Length > 1)
             {
@@ -58,7 +59,7 @@ public static partial class DommelMapper
             }
             var keyColumnName = Resolvers.Column(keyProperties[0].Property, sqlBuilder);
 
-            sql = $"select * from {tableName} where {keyColumnName} = {sqlBuilder.PrefixParameter("Id")}";
+            sql = $"select {selectFields} from {tableName} where {keyColumnName} = {sqlBuilder.PrefixParameter("Id")}";
             QueryCache.TryAdd(cacheKey, sql);
         }
 
@@ -137,6 +138,7 @@ public static partial class DommelMapper
         if (!QueryCache.TryGetValue(cacheKey, out var sql))
         {
             var tableName = Resolvers.Table(type, sqlBuilder);
+            var selectFields = Resolvers.SelectExpression(type, sqlBuilder);
             var keyProperties = Resolvers.KeyProperties(type);
             var keyColumnNames = keyProperties.Select(p => Resolvers.Column(p.Property, sqlBuilder)).ToArray();
             if (keyColumnNames.Length != ids.Length)
@@ -144,7 +146,7 @@ public static partial class DommelMapper
                 throw new InvalidOperationException($"Number of key columns ({keyColumnNames.Length}) of type {type.Name} does not match with the number of specified IDs ({ids.Length}).");
             }
 
-            var sb = new StringBuilder("select * from ").Append(tableName).Append(" where");
+            var sb = new StringBuilder("select ").Append(selectFields).Append(" from ").Append(tableName).Append(" where");
             var i = 0;
             foreach (var keyColumnName in keyColumnNames)
             {
@@ -209,7 +211,7 @@ public static partial class DommelMapper
         var cacheKey = new QueryCacheKey(QueryCacheType.GetAll, sqlBuilder, type);
         if (!QueryCache.TryGetValue(cacheKey, out var sql))
         {
-            sql = "select * from " + Resolvers.Table(type, sqlBuilder);
+            sql = $"select {Resolvers.SelectExpression(type, sqlBuilder)} from {Resolvers.Table(type, sqlBuilder)}";
             QueryCache.TryAdd(cacheKey, sql);
         }
 

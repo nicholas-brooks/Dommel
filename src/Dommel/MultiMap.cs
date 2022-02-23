@@ -654,7 +654,8 @@ public static partial class DommelMapper
     {
         var resultTableName = Resolvers.Table(resultType, sqlBuilder);
         var resultTableKeyColumnName = Resolvers.Column(Resolvers.KeyProperties(resultType).Single().Property, sqlBuilder);
-        var sql = $"select * from {resultTableName}";
+        var fields = Resolvers.SelectExpression(includeTypes, sqlBuilder);
+        var sql = $"select {fields} from {resultTableName}";
 
         // Determine the table to join with.
         var sourceType = includeTypes[0];
