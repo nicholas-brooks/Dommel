@@ -38,6 +38,20 @@ public static class Resolvers
     }
 
     /// <summary>
+    /// Determine the left and right key column names based on the joining between sourceType and includeType.
+    /// </summary>
+    /// <param name="sqlBuilder">The SQL Builder instance.</param>
+    /// <param name="sourceType">The type that represents the left side of the join expression</param>
+    /// <param name="includeType">The type that represents the right-side of the join expression</param>
+    /// <returns>Tuple with the column name of the left key and column name of the right key.</returns>
+    public static (string leftKeyName, string rightKeyName) JoinProperties(ISqlBuilder sqlBuilder, Type sourceType, Type includeType)
+    {
+        var (leftKeyName, rightKeyName) = DommelMapper.MultiMapJoinResolver.ResolveJoinProperties(sqlBuilder, sourceType, includeType);
+        DommelMapper.LogReceived?.Invoke($"Resolved join for {sourceType} -> {includeType} as {leftKeyName} = {rightKeyName}");
+        return (leftKeyName, rightKeyName);
+    }
+
+    /// <summary>
     /// Gets the foreign key property for the specified source type and including type
     /// using the configured <see cref="IForeignKeyPropertyResolver"/>.
     /// </summary>

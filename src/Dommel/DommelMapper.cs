@@ -23,6 +23,7 @@ public static partial class DommelMapper
     internal static ITableNameResolver TableNameResolver = new DefaultTableNameResolver();
     internal static ISelectExpressionResolver SelectExpressionResolver = new DefaultSelectExpressionResolver();
     internal static IColumnNameResolver ColumnNameResolver = new DefaultColumnNameResolver();
+    internal static IMultiMapJoinResolver MultiMapJoinResolver = new DefaultMultiMapJoinResolver();
 
     internal static readonly Dictionary<string, ISqlBuilder> SqlBuilders = new()
     {
@@ -89,6 +90,12 @@ public static partial class DommelMapper
     /// </summary>
     /// <param name="resolver">An instance of <see cref="IForeignKeyPropertyResolver"/>.</param>
     public static void SetForeignKeyPropertyResolver(IForeignKeyPropertyResolver resolver) => ForeignKeyPropertyResolver = resolver;
+
+    /// <summary>
+    /// Sets the <see cref="IMultiMapJoinResolver"/> implementation for resolving joins.
+    /// </summary>
+    /// <param name="resolver">An instance of <see cref="IMultiMapJoinResolver"/>.</param>
+    public static void SetMutiMapJoinResolver(IMultiMapJoinResolver resolver) => MultiMapJoinResolver = resolver;
 
     /// <summary>
     /// Sets the <see cref="ITableNameResolver"/> implementation for resolving table names for entities.

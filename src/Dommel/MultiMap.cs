@@ -653,7 +653,6 @@ public static partial class DommelMapper
     internal static string BuildMultiMapQuery(ISqlBuilder sqlBuilder, Type resultType, Type[] includeTypes, object? id, out DynamicParameters? parameters)
     {
         var resultTableName = Resolvers.Table(resultType, sqlBuilder);
-        var resultTableKeyColumnName = Resolvers.Column(Resolvers.KeyProperties(resultType).Single().Property, sqlBuilder);
         var fields = Resolvers.SelectExpression(includeTypes, sqlBuilder);
         var sql = $"select {fields} from {resultTableName}";
 
@@ -665,27 +664,15 @@ public static partial class DommelMapper
             var includeType = includeTypes[i];
             var foreignKeyTableName = Resolvers.Table(includeType, sqlBuilder);
 
-            // Determine the foreign key and the relationship type.
-            var foreignKeyProperty = Resolvers.ForeignKeyProperty(sourceType, includeType, out var relation);
-            var foreignKeyPropertyName = Resolvers.Column(foreignKeyProperty, sqlBuilder);
+            var (leftPropertyName, rightPropertyName) = Resolvers.JoinProperties(sqlBuilder, sourceType, includeType);
 
-            if (relation == ForeignKeyRelation.OneToOne)
-            {
-                // Determine the primary key of the foreign key table.
-                var foreignKeyTableKeyColumName = Resolvers.Column(Resolvers.KeyProperties(includeType).Single().Property, sqlBuilder);
-                sql += $" left join {foreignKeyTableName} on {foreignKeyPropertyName} = {foreignKeyTableKeyColumName}";
-            }
-            else if (relation == ForeignKeyRelation.OneToMany)
-            {
-                // Determine the primary key of the source table.
-                var sourceKeyColumnName = Resolvers.Column(Resolvers.KeyProperties(sourceType).Single().Property, sqlBuilder);
-                sql += $" left join {foreignKeyTableName} on {sourceKeyColumnName} = {foreignKeyPropertyName}";
-            }
+            sql += $" left join {foreignKeyTableName} on {leftPropertyName} = {rightPropertyName}";
         }
 
         parameters = null;
         if (id != null)
         {
+            var resultTableKeyColumnName = Resolvers.Column(Resolvers.KeyProperties(resultType).Single().Property, sqlBuilder);
             sql += $" where {resultTableKeyColumnName} = {sqlBuilder.PrefixParameter("Id")}";
 
             parameters = new DynamicParameters();
