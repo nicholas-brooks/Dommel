@@ -44,8 +44,9 @@ public interface ISqlBuilder
     /// Returns a limit clause for the specified <paramref name="count"/>.
     /// </summary>
     /// <param name="count">The count of limit clause.</param>
+    /// <param name="offset">The offset for the limit clause.  Not used if null</param>
     /// <returns>A limit clause of the specified count.</returns>
-    string LimitClause(int count);
+    string LimitClause(int count, int? offset = null);
 
     /// <summary>
     /// Returns a like-expresion for the specified <paramref name="columnName"/> and <paramref name="parameterName"/>.

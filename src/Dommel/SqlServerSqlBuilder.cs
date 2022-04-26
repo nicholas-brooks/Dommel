@@ -25,7 +25,7 @@ public class SqlServerSqlBuilder : ISqlBuilder
     public string QuoteIdentifier(string identifier) => $"[{identifier}]";
 
     /// <inheritdoc/>
-    public string LimitClause(int count) => $"order by 1 offset 0 rows fetch next {count} rows only";
+    public string LimitClause(int count, int? offset = null) => $"order by 1 offset {offset ?? 0} rows fetch next {count} rows only";
 
     /// <inheritdoc/>
     public string LikeExpression(string columnName, string parameterName) => $"{columnName} like {parameterName}";

@@ -25,7 +25,7 @@ public class MySqlSqlBuilder : ISqlBuilder
     public string QuoteIdentifier(string identifier) => $"`{identifier}`";
 
     /// <inheritdoc/>
-    public string LimitClause(int count) => $"limit {count}";
+    public string LimitClause(int count, int? offset = null) => offset == null ? $"limit {count}" : $"limit {offset}, {count}";
 
     /// <inheritdoc/>
     public string LikeExpression(string columnName, string parameterName) => $"{columnName} like {parameterName}";
