@@ -79,8 +79,7 @@ public class SqlExpression<TEntity>
         var columns = props.Select(p => Resolvers.Column(p, SqlBuilder));
 
         // Create the select query
-        var tableName = Resolvers.Table(EntityType, SqlBuilder);
-        _selectQuery = $"select {string.Join(", ", columns)} from {tableName}";
+        _selectQuery = $"select {string.Join(", ", columns)} from {Resolvers.Table(EntityType, SqlBuilder)}";
         return this;
     }
 

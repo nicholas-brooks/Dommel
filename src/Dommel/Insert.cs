@@ -127,7 +127,7 @@ public static partial class DommelMapper
             var columnNames = typeProperties.Select(p => Resolvers.Column(p, sqlBuilder, false)).ToArray();
             var paramNames = typeProperties.Select(p => sqlBuilder.PrefixParameter(p.Name)).ToArray();
 
-            sql = sqlBuilder.BuildInsert(type, tableName, columnNames, paramNames);
+            sql = sqlBuilder.BuildInsert(type, tableName.Name, columnNames, paramNames);
 
             QueryCache.TryAdd(cacheKey, sql);
         }

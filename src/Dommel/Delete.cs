@@ -143,7 +143,7 @@ public static partial class DommelMapper
         if (!QueryCache.TryGetValue(cacheKey, out var sql))
         {
             var tableName = Resolvers.Table(type, sqlBuilder);
-            sql = $"delete from {tableName}";
+            sql = $"delete from {tableName.Name}";
             QueryCache.TryAdd(cacheKey, sql);
         }
 

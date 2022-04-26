@@ -72,7 +72,7 @@ public static partial class DommelMapper
         if (!QueryCache.TryGetValue(cacheKey, out var sql))
         {
             var tableName = Resolvers.Table(type, sqlBuilder);
-            sql = $"select count(*) from {tableName}";
+            sql = $"select count(*) from {tableName.Name}";
             QueryCache.TryAdd(cacheKey, sql);
         }
 

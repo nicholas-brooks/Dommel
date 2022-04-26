@@ -14,7 +14,7 @@ public class DefaultTableNameResolver : ITableNameResolver
     /// Looks for the [Table] attribute. Otherwise by making the type
     /// plural (eg. Product -> Products) and removing the 'I' prefix for interfaces.
     /// </summary>
-    public virtual string ResolveTableName(Type type)
+    public virtual TableName ResolveTableName(Type type)
     {
         var typeInfo = type.GetTypeInfo();
         var tableAttr = typeInfo.GetCustomAttribute<TableAttribute>();
@@ -22,10 +22,10 @@ public class DefaultTableNameResolver : ITableNameResolver
         {
             if (!string.IsNullOrEmpty(tableAttr.Schema))
             {
-                return $"{tableAttr.Schema}.{tableAttr.Name}";
+                return new TableName($"{tableAttr.Schema}.{tableAttr.Name}", tableAttr.Name);
             }
 
-            return tableAttr.Name;
+            return new TableName(tableAttr.Name, tableAttr.Name);
         }
 
         // Fall back to plural of table name
@@ -41,6 +41,6 @@ public class DefaultTableNameResolver : ITableNameResolver
             name += "s";
         }
 
-        return name;
+        return new TableName(name, name);
     }
 }
