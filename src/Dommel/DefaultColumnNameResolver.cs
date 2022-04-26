@@ -14,7 +14,11 @@ public class DefaultColumnNameResolver : IColumnNameResolver
     /// </summary>
     public virtual string ResolveColumnName(PropertyInfo propertyInfo)
     {
-        var columnAttr = propertyInfo.GetCustomAttribute<ColumnAttribute>();
-        return columnAttr?.Name ?? propertyInfo.Name;
+        var attr = propertyInfo.GetCustomAttribute<ComputedColumnAttribute>();
+        if (attr is not null)
+        {
+            return attr.Alias ?? propertyInfo.Name;
+        }
+        return propertyInfo.GetCustomAttribute<ColumnAttribute>()?.Name ?? propertyInfo.Name;
     }
 }

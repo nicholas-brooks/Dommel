@@ -49,6 +49,10 @@ public static partial class DommelMapper
                     {
                         return property;
                     }
+                    if (property.GetCustomAttribute<ComputedColumnAttribute>()?.Alias == columnName)
+                    {
+                        return property;
+                    }
                 }
                 return DefaultTypeMapProvider(type)?.GetMember(columnName)?.Property;
             });

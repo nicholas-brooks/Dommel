@@ -211,23 +211,47 @@ public static PropertyInfo ForeignKeyProperty(Type sourceType, Type includingTyp
     /// <param name="sqlBuilder">The SQL builder instance.</param>
     /// <param name="includeTableName">Whether to include table name with the column name for unambiguity. E.g. <c>[Products].[Name]</c>.</param>
     /// <returns>The column name in the database for <paramref name="propertyInfo"/>.</returns>
-    public static string Column(PropertyInfo propertyInfo, ISqlBuilder sqlBuilder, bool includeTableName = true)
+    public static string Column(PropertyInfo propertyInfo, ISqlBuilder sqlBuilder, bool includeTableName)
     {
         var key = $"{sqlBuilder.GetType()}.{propertyInfo.ReflectedType}.{propertyInfo.Name}.{includeTableName}";
         if (!ColumnNameCache.TryGetValue(key, out var columnName))
         {
-            columnName = sqlBuilder.QuoteIdentifier(DommelMapper.ColumnNameResolver.ResolveColumnName(propertyInfo));
-            if (includeTableName && propertyInfo.ReflectedType?.IsDefined(typeof(CompilerGeneratedAttribute)) == false)
+            if (propertyInfo.GetCustomAttribute<ComputedColumnAttribute>() != null)
             {
-                // Include the table name for unambiguity, except for anonymyes types e.g. x => new { x.Id, x.Name }
-                var tableName = Table(propertyInfo.ReflectedType, sqlBuilder);
-                columnName = $"{tableName.Alias}.{columnName}";
+                columnName = sqlBuilder.QuoteIdentifier(DommelMapper.ColumnNameResolver.ResolveColumnName(propertyInfo));
             }
+            else
+            {
+                columnName = sqlBuilder.QuoteIdentifier(DommelMapper.ColumnNameResolver.ResolveColumnName(propertyInfo));
+                if (includeTableName && propertyInfo.ReflectedType?.IsDefined(typeof(CompilerGeneratedAttribute)) == false)
+                {
+                    // Include the table name for unambiguity, except for anonymyes types e.g. x => new { x.Id, x.Name }
+                    var tableName = Table(propertyInfo.ReflectedType, sqlBuilder);
+                    columnName = $"{tableName.Alias}.{columnName}";
+                }
+            }
+
             ColumnNameCache.TryAdd(key, columnName);
         }
 
         DommelMapper.LogReceived?.Invoke($"Resolved column name '{columnName}' for '{propertyInfo}'");
         return columnName;
+    }
+
+    /// <summary>
+    /// Return the name of the column in the database for the specified type for the property that matches <paramref name="maybePropertyName" />.
+    /// If no property is found return null.
+    /// </summary>
+    /// <param name="type">The Type to find the property on</param>
+    /// <param name="maybePropertyName">The string of the property name</param>
+    /// <param name="sqlBuilder">The SQL builder instance.</param>
+    /// <param name="includeTableName">Whether to include table name with the column name for unambiguity. E.g. <c>[Products].[Name]</c>.</param>
+    /// <returns>The column name in the database for <paramref name="maybePropertyName"/> or null if none found.</returns>
+    public static string Column(Type type, string maybePropertyName, ISqlBuilder sqlBuilder, bool includeTableName = true)
+    {
+        var property = type.GetProperty(maybePropertyName, BindingFlags.IgnoreCase |  BindingFlags.Public | BindingFlags.Instance);
+        return property != null ? Column(property, sqlBuilder, includeTableName) : throw new ArgumentException(
+            $"Unknown property {maybePropertyName}");
     }
 
     private struct ForeignKeyInfo
