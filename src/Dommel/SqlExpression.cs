@@ -171,6 +171,20 @@ public class SqlExpression<TEntity>
     }
 
     /// <summary>
+    /// Adds a limit expression to the current expression.
+    /// This is an alternative to Page where you want full control of the limit and offset values.
+    /// </summary>
+    /// <param name="limit">The number of records to fetch.  Starts as 1.</param>
+    /// <param name="offset">The number of records to offset by.  Starts at zero.</param>
+    /// <returns></returns>
+    public virtual SqlExpression<TEntity> Limit(int limit, int offset)
+    {
+        var limitClause = SqlBuilder.LimitClause(limit, offset);
+        _pagingQuery = (limitClause.Substring(1, 1) != " ") ? $" {limitClause}" : limitClause;
+        return this;
+    }
+
+    /// <summary>
     /// Adds an order-by-statement (ascending) to the current expression.
     /// </summary>
     /// <param name="selector">The column to order by. E.g. <code>x => x.Name</code>.</param>
