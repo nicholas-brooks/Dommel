@@ -154,6 +154,22 @@ public class SqlExpression<TEntity>
 
         return this;
     }
+    
+    /// <summary>
+    /// Builds a SQL expression with the raw sql expression.
+    /// </summary>
+    /// <remarks>
+    /// This is a <b>potentially dangerous call</b> as you're passing raw sql string here.  There is no validation
+    /// that is performed by this so tread carefully!
+    /// </remarks>
+    /// <param name="expression">The filter expression on the entity.</param>
+    /// <returns>The current <see cref="SqlExpression{TEntity}"/> instance.</returns>
+    public virtual SqlExpression<TEntity> Where(string expression)
+    {
+        AppendToWhere(_whereBuilder.Length == 0 ? null : "and", expression);
+
+        return this;
+    }
 
     /// <summary>
     /// Adds another where-statement with the 'and' operator.
