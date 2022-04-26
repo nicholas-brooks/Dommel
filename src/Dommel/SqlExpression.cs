@@ -19,7 +19,8 @@ public class SqlExpression<TEntity>
     private readonly StringBuilder _whereBuilder = new();
     private readonly StringBuilder _orderByBuilder = new();
     private readonly DynamicParameters _parameters = new();
-    private string? _selectQuery;
+    private string? _selectFields;
+    private Type _fromType = typeof(TEntity);
     private string? _pagingQuery;
     private int _parameterIndex;
 
@@ -49,7 +50,32 @@ public class SqlExpression<TEntity>
     /// <returns>The current <see cref="SqlExpression{TEntity}"/> instance.</returns>
     public virtual SqlExpression<TEntity> Select()
     {
-        _selectQuery = $"select {Resolvers.SelectExpression(typeof(TEntity), SqlBuilder)} from {Resolvers.Table(typeof(TEntity), SqlBuilder)}";
+        _selectFields = Resolvers.SelectExpression(_fromType, SqlBuilder);
+        return this;
+    }
+
+    /// <summary>
+    /// Append to the select list using specific fields.
+    /// </summary>
+    /// <remarks>
+    /// This is a <b>potentially dangerous call</b> as you're passing raw sql string here.  There is no validation
+    /// that is performed by this so tread carefully!
+    /// </remarks>
+    /// <param name="fields">List of fields to append.</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">Thrown if Select() has not been called.</exception>
+    public virtual SqlExpression<TEntity> AndSelect(string[] fields)
+    {
+        if (string.IsNullOrEmpty(_selectFields))
+        {
+            throw new ArgumentException("You must call Select() first.");
+        }
+
+        if (fields.Any())
+        {
+            _selectFields += $", {string.Join(", ", fields)}";
+        }
+
         return this;
     }
 
@@ -78,8 +104,10 @@ public class SqlExpression<TEntity>
 
         var columns = props.Select(p => Resolvers.Column(p, SqlBuilder));
 
-        // Create the select query
-        _selectQuery = $"select {string.Join(", ", columns)} from {Resolvers.Table(EntityType, SqlBuilder)}";
+        _selectFields = string.Join(", ", columns);
+
+        _fromType = EntityType;
+
         return this;
     }
 
@@ -717,37 +745,39 @@ public class SqlExpression<TEntity>
     /// Returns the current SQL query.
     /// </summary>
     /// <returns>The current SQL query.</returns>
+    /// <exception cref="ArgumentException">Thrown if Select() has not been called.</exception>
     public string ToSql()
     {
-        var where = _whereBuilder.ToString();
-        var orderBy = _orderByBuilder.ToString();
-        var query = "";
-        if (!string.IsNullOrEmpty(_selectQuery))
+        var query = new StringBuilder();
+        if (string.IsNullOrEmpty(_selectFields))
         {
-            query += _selectQuery;
+            throw new ArgumentException("No Select Fields found.  Select() may not have been called");
         }
-        if (!string.IsNullOrEmpty(where))
+
+        query.Append($"select {_selectFields} from {Resolvers.Table(_fromType, SqlBuilder)}");
+
+        if (_whereBuilder.Length > 0)
         {
-            query += where;
+            query.Append(_whereBuilder.ToString());
         }
-        if (!string.IsNullOrEmpty(orderBy))
+        if (_orderByBuilder.Length > 0)
         {
-            query += orderBy;
+            query.Append(_orderByBuilder.ToString());
         }
         if (!string.IsNullOrEmpty(_pagingQuery))
         {
-            if (string.IsNullOrEmpty(orderBy))
+            if (_orderByBuilder.Length == 0) // todo: raise a warning here!
             {
                 // When we're paging we'll need an order to guarantee consistent paging results, when
                 // the user did not specified an order themself we'll order on the PKs of the table.
                 var keyColumns = Resolvers.KeyProperties(typeof(TEntity)).Select(p => Resolvers.Column(p.Property, SqlBuilder));
                 AppendOrderBy(string.Join(", ", keyColumns), direction: "asc", prepend: true);
-                query += _orderByBuilder.ToString();
+                query.Append(_orderByBuilder.ToString());
             }
 
-            query += _pagingQuery;
+            query.Append(_pagingQuery);
         }
-        return query;
+        return query.ToString();
     }
 
     /// <summary>
