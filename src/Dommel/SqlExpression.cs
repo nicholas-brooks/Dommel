@@ -108,6 +108,26 @@ public class SqlExpression<TEntity>
     }
 
     /// <summary>
+    /// Builds a SQL expression with the raw sql expression.
+    /// </summary>
+    /// <remarks>
+    /// This is a <b>potentially dangerous call</b> as you're passing raw sql string here.  There is no validation
+    /// that is performed by this so tread carefully!
+    /// </remarks>
+    /// <param name="buildExpression">Func to allow the caller to build the filter expression.</param>
+    /// <returns>The current <see cref="SqlExpression{TEntity}"/> instance.</returns>
+    public virtual SqlExpression<TEntity> Where(Func<ISqlBuilder, string> buildExpression)
+    {
+        var expression = buildExpression(SqlBuilder);
+        if (!string.IsNullOrWhiteSpace(expression))
+        {
+            AppendToWhere(_whereBuilder.Length == 0 ? null : "and", expression);
+        }
+
+        return this;
+    }
+
+    /// <summary>
     /// Adds another where-statement with the 'and' operator.
     /// </summary>
     /// <param name="expression">The filter expression on the entity.</param>
@@ -124,7 +144,31 @@ public class SqlExpression<TEntity>
         }
         return this;
     }
+    
+    /// <summary>
+    /// Adds another where-statement with the 'and' operator.
+    /// </summary>
+    /// <remarks>
+    /// This is a <b>potentially dangerous call</b> as you're passing raw sql string here.  There is no validation
+    /// that is performed by this so tread carefully!
+    /// </remarks>
+    /// <param name="buildExpression">Func to allow the caller to build the filter expression.</param>
+    /// <returns>The current <see cref="SqlExpression{TEntity}"/> instance.</returns>
+    public virtual SqlExpression<TEntity> AndWhere(Func<ISqlBuilder, string> buildExpression)
+    {
+        if (_whereBuilder.Length == 0)
+        {
+            throw new InvalidOperationException("Start the where statement with the 'Where' method.");
+        }
+        var expression = buildExpression(SqlBuilder);
+        if (!string.IsNullOrWhiteSpace(expression))
+        {
+            AppendToWhere("and", expression);
+        }
 
+        return this;
+    }
+    
     /// <summary>
     /// Adds another where-statement with the 'or' operator to the current expression.
     /// </summary>
@@ -142,10 +186,37 @@ public class SqlExpression<TEntity>
         }
         return this;
     }
+    
+    /// <summary>
+    /// Adds another where-statement with the 'or' operator.
+    /// </summary>
+    /// <remarks>
+    /// This is a <b>potentially dangerous call</b> as you're passing raw sql string here.  There is no validation
+    /// that is performed by this so tread carefully!
+    /// </remarks>
+    /// <param name="buildExpression">Func to allow the caller to build the filter expression.</param>
+    /// <returns>The current <see cref="SqlExpression{TEntity}"/> instance.</returns>
+    public virtual SqlExpression<TEntity> OrWhere(Func<ISqlBuilder, string> buildExpression)
+    {
+        if (_whereBuilder.Length == 0)
+        {
+            throw new InvalidOperationException("Start the where statement with the 'Where' method.");
+        }
+        var expression = buildExpression(SqlBuilder);
+        if (!string.IsNullOrWhiteSpace(expression))
+        {
+            AppendToWhere("or", $"({expression})");
+        }
 
+        return this;
+    }
     private void AppendToWhere(string? conditionOperator, Expression expression)
     {
-        var sqlExpression = VisitExpression(expression).ToString();
+        AppendToWhere(conditionOperator, VisitExpression(expression).ToString());
+    }
+    
+    private void AppendToWhere(string? conditionOperator, string expression)
+    {
         if (_whereBuilder.Length == 0)
         {
             _whereBuilder.Append(" where ");
@@ -155,7 +226,7 @@ public class SqlExpression<TEntity>
             _whereBuilder.AppendFormat(" {0} ", conditionOperator);
         }
 
-        _whereBuilder.Append("(" + sqlExpression + ")");
+        _whereBuilder.Append("(" + expression + ")");
     }
 
     /// <summary>
