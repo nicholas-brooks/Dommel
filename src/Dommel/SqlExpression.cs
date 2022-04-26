@@ -207,6 +207,26 @@ public class SqlExpression<TEntity>
     }
 
     /// <summary>
+    /// Builds a SQL expression with the raw sql expression.
+    /// </summary>
+    /// <remarks>
+    /// This is a <b>potentially dangerous call</b> as you're passing raw sql string here.  There is no validation
+    /// that is performed by this so tread carefully!
+    /// </remarks>
+    /// <param name="buildExpression">Func to allow the caller to build the filter expression.</param>
+    /// <returns>The current <see cref="SqlExpression{TEntity}"/> instance.</returns>
+    public virtual SqlExpression<TEntity> OrderBy(Func<ISqlBuilder, string> buildExpression)
+    {
+        var expression = buildExpression(SqlBuilder);
+        if (!string.IsNullOrWhiteSpace(expression))
+        {
+            AppendOrderBy(expression);
+        }
+
+        return this;
+    }
+
+    /// <summary>
     /// Adds an order-by-statement (descending) to the current expression.
     /// </summary>
     /// <param name="selector">The column to order by. E.g. <code>x => x.Name</code>.</param>
@@ -249,18 +269,23 @@ public class SqlExpression<TEntity>
         {
             throw new ArgumentNullException(nameof(direction));
         }
+        AppendOrderBy($"{column} {direction}", prepend);
+    }
+
+    private void AppendOrderBy(string clause, bool prepend = false)
+    {
         if (_orderByBuilder.Length == 0)
         {
-            _orderByBuilder.Append($" order by {column} {direction}");
+            _orderByBuilder.Append($" order by {clause}");
         }
         else if (prepend)
         {
             // Insert the column sort option right after 'order by '
-            _orderByBuilder.Insert(10, $"{column} {direction}, ");
+            _orderByBuilder.Insert(10, $"{clause}, ");
         }
         else
         {
-            _orderByBuilder.Append($", {column} {direction}");
+            _orderByBuilder.Append($", {clause}");
         }
     }
 
