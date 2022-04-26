@@ -761,16 +761,13 @@ public class SqlExpression<TEntity>
     /// Returns the current SQL query.
     /// </summary>
     /// <returns>The current SQL query.</returns>
-    /// <exception cref="ArgumentException">Thrown if Select() has not been called.</exception>
     public string ToSql()
     {
         var query = new StringBuilder();
-        if (string.IsNullOrEmpty(_selectFields))
+        if (!string.IsNullOrEmpty(_selectFields))
         {
-            throw new ArgumentException("No Select Fields found.  Select() may not have been called");
+            query.Append($"select {_selectFields} from {Resolvers.Table(_fromType, SqlBuilder)}");
         }
-
-        query.Append($"select {_selectFields} from {Resolvers.Table(_fromType, SqlBuilder)}");
 
         if (_whereBuilder.Length > 0)
         {
